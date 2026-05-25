@@ -1,0 +1,28 @@
+# ── Git Ignore — OE Ticket ──────────────────────────────────────────────────
+
+# Secrets
+.env
+*.env.local
+
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+.vs/
+*.nupkg
+*.snupkg
+
+# Node / Frontend
+node_modules/
+dist/
+.cache/
+
+# IDE
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log

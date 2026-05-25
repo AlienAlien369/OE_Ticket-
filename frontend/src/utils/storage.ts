@@ -1,0 +1,37 @@
+/** Type-safe localStorage wrapper with JSON serialization */
+export const storage = {
+  get: <T>(key: string): T | null => {
+    try {
+      const item = localStorage.getItem(key)
+      return item ? (JSON.parse(item) as T) : null
+    } catch {
+      return null
+    }
+  },
+  set: <T>(key: string, value: T): void => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value))
+    } catch {
+      console.warn(`Failed to store key: ${key}`)
+    }
+  },
+  remove: (key: string): void => localStorage.removeItem(key),
+  clear: (): void => localStorage.clear(),
+}
+
+export const sessionStorage = {
+  get: <T>(key: string): T | null => {
+    try {
+      const item = window.sessionStorage.getItem(key)
+      return item ? (JSON.parse(item) as T) : null
+    } catch {
+      return null
+    }
+  },
+  set: <T>(key: string, value: T): void => {
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(value))
+    } catch {}
+  },
+  remove: (key: string): void => window.sessionStorage.removeItem(key),
+}

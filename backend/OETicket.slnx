@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OETicket.API/OETicket.API.csproj" />
+    <Project Path="src/OETicket.Application/OETicket.Application.csproj" />
+    <Project Path="src/OETicket.Domain/OETicket.Domain.csproj" />
+    <Project Path="src/OETicket.Infrastructure/OETicket.Infrastructure.csproj" />
+  </Folder>
+</Solution>
