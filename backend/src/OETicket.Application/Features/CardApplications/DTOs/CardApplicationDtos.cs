@@ -26,6 +26,22 @@ public sealed record CardApplicationDto(
     DateTime CreatedOn
 );
 
+/// <summary>
+/// Simplified DTO for the "New Token" form — only the fields the operator enters.
+/// Server-side defaults fill in all legacy required columns.
+/// </summary>
+public sealed record NewTokenRequestDto(
+    string FirstName,
+    string? MiddleName,
+    string LastName,
+    /// <summary>Male | Female | Other</summary>
+    string Gender,
+    string DateOfBirth,          // ISO date string e.g. "1985-07-15"
+    int Age,
+    string MobileNumber,
+    string? AadhaarNumber        // maps to UID (12-digit)
+);
+
 public sealed record CreateCardApplicationDto(
     DateOnly ApplicationDate,
     char ApplicationType,

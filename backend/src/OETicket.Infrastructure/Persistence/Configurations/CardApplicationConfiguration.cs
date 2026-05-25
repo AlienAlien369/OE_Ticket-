@@ -10,7 +10,7 @@ public sealed class CardApplicationConfiguration : IEntityTypeConfiguration<Card
     {
         builder.ToTable("card_applications");
         builder.HasKey(a => a.Id);
-        builder.Property(a => a.Id).ValueGeneratedNever();
+        builder.Property(a => a.Id).ValueGeneratedOnAdd();   // auto-increment via PostgreSQL sequence
 
         builder.Property(a => a.ApplicationType).HasMaxLength(1).IsFixedLength().IsRequired();
         builder.Property(a => a.ApplicationBatchCode).HasMaxLength(15).IsFixedLength().IsRequired();

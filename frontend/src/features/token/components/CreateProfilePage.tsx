@@ -4,11 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { PlusCircle, ChevronRight, Info, Printer } from 'lucide-react'
+import { PlusCircle, ChevronRight, Info, Printer, Loader2 } from 'lucide-react'
 import { Button } from '@components/ui/Button'
 import { ROUTES } from '@config/index'
 import { TokenPrintTicket } from './TokenPrintTicket'
 import type { TokenPrintTicketProps } from './TokenPrintTicket'
+import { useCreateNewToken } from '../hooks/useTokenApplication'
+import type { ApiResponse } from '@/types/index'
+import type { NewTokenResponseDto } from '../services/tokenService'
 
 
 
@@ -58,6 +61,7 @@ const ErrorText = ({ message }: { message: string | undefined }) =>
 
 export const CreateProfilePage = () => {
   const navigate = useNavigate()
+  const { mutateAsync: createNewToken, isPending } = useCreateNewToken()
   const [generatedToken, setGeneratedToken] = useState<string | null>(null)
   const [printData, setPrintData] = useState<Required<TokenPrintTicketProps> | null>(null)
 
@@ -107,7 +111,7 @@ export const CreateProfilePage = () => {
     watch,
     reset,
     setValue,
-    formState: { errors, isValid, isSubmitting },
+    formState: { errors, isValid },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: 'onChange',
@@ -130,21 +134,35 @@ export const CreateProfilePage = () => {
     setValue('age', calculateAge(value), { shouldValidate: true, shouldDirty: true })
   }
 
-  const onSubmit = (data: ProfileFormData) => {
-    const newToken = `TC.${new Date().toLocaleDateString('en-GB').replaceAll('/', ' ')} ${Math.floor(
-      100000 + Math.random() * 900000
-    )}`
-
-    setGeneratedToken(newToken)
-    localStorage.setItem(
-      'token-profile',
-      JSON.stringify({
-        ...data,
-        token: newToken,
+  const onSubmit = async (data: ProfileFormData) => {
+    try {
+      const response: ApiResponse<NewTokenResponseDto> = await createNewToken({
+        firstName: data.firstName,
+        ...(data.middleName ? { middleName: data.middleName } : {}),
+        lastName: data.lastName,
+        gender: data.gender,
+        dateOfBirth: data.dob,
+        age: data.age,
+        mobileNumber: data.mobileNumber,
+        ...(data.aadhaarNumber ? { aadhaarNumber: data.aadhaarNumber } : {}),
       })
-    )
-    toast.success('Profile saved and token generated')
-    navigate(ROUTES.PHOTO_CAPTURE, { state: { profile: { ...data, token: newToken } } })
+
+      const tokenData = response.data!
+      setGeneratedToken(tokenData.tokenNumber)
+
+      const profile = {
+        ...data,
+        token: tokenData.tokenNumber,
+        applicationId: tokenData.applicationId,
+      }
+      localStorage.setItem('token-profile', JSON.stringify(profile))
+      toast.success(`Token generated: ${tokenData.tokenNumber}`)
+      navigate(ROUTES.PHOTO_CAPTURE, { state: { profile } })
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ?? 'Failed to create token. Please try again.'
+      toast.error(msg)
+    }
   }
 
   return (
@@ -153,7 +171,7 @@ export const CreateProfilePage = () => {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Create Profile</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            System registration for ChatMed 2.0 token generation
+            System registration for OE Ticket token generation
           </p>
         </div>
 
@@ -164,32 +182,34 @@ export const CreateProfilePage = () => {
         >
           <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <Info className="h-3.5 w-3.5" />
-            Details
+            Patient Details
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Mobile Number</label>
+              <label className="text-xs font-medium text-muted-foreground">Mobile Number *</label>
               <input
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 maxLength={10}
                 inputMode="numeric"
+                placeholder="10-digit mobile"
                 {...register('mobileNumber')}
               />
               <ErrorText message={errors.mobileNumber?.message} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">UID Aadhaar Number</label>
+              <label className="text-xs font-medium text-muted-foreground">UID / Aadhaar Number *</label>
               <input
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 maxLength={12}
                 inputMode="numeric"
+                placeholder="12-digit Aadhaar"
                 {...register('aadhaarNumber')}
               />
               <ErrorText message={errors.aadhaarNumber?.message} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">First Name</label>
+              <label className="text-xs font-medium text-muted-foreground">First Name *</label>
               <input
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 {...register('firstName')}
@@ -204,7 +224,7 @@ export const CreateProfilePage = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Last Name</label>
+              <label className="text-xs font-medium text-muted-foreground">Last Name *</label>
               <input
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 {...register('lastName')}
@@ -212,7 +232,7 @@ export const CreateProfilePage = () => {
               <ErrorText message={errors.lastName?.message} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Gender</label>
+              <label className="text-xs font-medium text-muted-foreground">Gender *</label>
               <select
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 {...register('gender')}
@@ -225,7 +245,7 @@ export const CreateProfilePage = () => {
               <ErrorText message={errors.gender?.message} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Date of Birth</label>
+              <label className="text-xs font-medium text-muted-foreground">Date of Birth *</label>
               <input
                 type="date"
                 value={dob}
@@ -235,7 +255,7 @@ export const CreateProfilePage = () => {
               <ErrorText message={errors.dob?.message} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Age</label>
+              <label className="text-xs font-medium text-muted-foreground">Age (auto-calculated)</label>
               <input
                 readOnly
                 className="w-full rounded-lg border border-input bg-muted/20 px-3 py-2 text-sm"
@@ -248,6 +268,7 @@ export const CreateProfilePage = () => {
             <Button
               variant="ghost"
               type="button"
+              disabled={isPending}
               onClick={() =>
                 reset({
                   mobileNumber: '',
@@ -265,10 +286,16 @@ export const CreateProfilePage = () => {
             </Button>
             <Button
               type="submit"
-              disabled={!isValid || isSubmitting}
-              rightIcon={<ChevronRight className="h-4 w-4" />}
+              disabled={!isValid || isPending}
+              rightIcon={
+                isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )
+              }
             >
-              Save & Continue
+              {isPending ? 'Creating Token...' : 'Save & Continue'}
             </Button>
           </div>
         </form>
