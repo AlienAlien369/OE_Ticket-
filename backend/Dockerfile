@@ -2,8 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and project files first (layer caching)
-COPY ["OETicket.sln", "./"]
+# Copy project files first (for layer caching of restore)
 COPY ["src/OETicket.API/OETicket.API.csproj",                 "src/OETicket.API/"]
 COPY ["src/OETicket.Application/OETicket.Application.csproj", "src/OETicket.Application/"]
 COPY ["src/OETicket.Domain/OETicket.Domain.csproj",           "src/OETicket.Domain/"]
