@@ -62,9 +62,21 @@ try
         {
             Title = "OE Ticket API",
             Version = "v1",
-            Description = "Enterprise-grade token management system for card applications."
+            Description = "Enterprise-grade token management system for card applications.",
+            Contact = new OpenApiContact
+            {
+                Name = "OE Ticket Support",
+                Email = "support@oeticket.com"
+            }
         });
 
+        // Include XML doc comments from controller summaries
+        var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+            c.IncludeXmlComments(xmlPath);
+
+        // JWT Bearer button in Swagger UI
         c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
             Name = "Authorization",
@@ -72,7 +84,7 @@ try
             Scheme = "bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Enter your JWT token."
+            Description = "Paste your JWT access token here (without the 'Bearer ' prefix)."
         });
 
         c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -115,15 +127,16 @@ try
 
     app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-    if (!app.Environment.IsProduction())
+    // Swagger available in all environments (use Authorize button with Bearer <token>)
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(c =>
-        {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "OE Ticket API v1");
-            c.RoutePrefix = "swagger";
-        });
-    }
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "OE Ticket API v1");
+        c.RoutePrefix = "swagger";
+        c.DocumentTitle = "OE Ticket API";
+        c.DefaultModelsExpandDepth(-1);        // collapse schemas by default
+        c.DisplayRequestDuration();
+    });
 
     app.UseHttpsRedirection();
     app.UseSerilogRequestLogging();
