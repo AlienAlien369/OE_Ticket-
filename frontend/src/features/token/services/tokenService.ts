@@ -9,13 +9,13 @@ import type { ApiResponse, PaginatedResponse } from '@/types/index'
 
 export interface NewTokenRequestDto {
   firstName: string
-  middleName?: string
+  middleName?: string | undefined
   lastName: string
-  gender: string          // "Male" | "Female" | "Other"
-  dateOfBirth: string     // ISO-8601 date string e.g. "1985-07-15"
+  gender: string
+  dateOfBirth: string
   age: number
   mobileNumber: string
-  aadhaarNumber?: string
+  aadhaarNumber?: string | undefined
 }
 
 export interface NewTokenResponseDto {
@@ -60,6 +60,16 @@ export const tokenService = {
     api.post<ApiResponse<NewTokenResponseDto>>(
       '/card-applications/new-token',
       data
+    ),
+
+  /**
+   * PUT /api/v1/card-applications/{id}/photo
+   * Saves the base64-encoded profile photo to the database.
+   */
+  savePhoto: (applicationId: number, photoBase64: string) =>
+    api.put<ApiResponse<boolean>>(
+      `/card-applications/${applicationId}/photo`,
+      { photoBase64 }
     ),
 
   /**

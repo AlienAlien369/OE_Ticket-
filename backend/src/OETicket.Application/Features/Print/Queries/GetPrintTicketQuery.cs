@@ -38,21 +38,30 @@ public sealed class GetPrintTicketQueryHandler(IApplicationDbContext dbContext)
         var tokenNumber = $"TC.{app.ApplicationDate:dd MM yyyy} {app.Id:D6}";
 
         return ApiResponse<PrintTicketDto>.Ok(new PrintTicketDto(
-            ApplicationId: app.Id,
-            TokenNumber: tokenNumber,
-            Name: fullName,
-            Gender: app.Gender == 'M' ? "Male" : app.Gender == 'F' ? "Female" : "Other",
-            Age: app.Age,
-            MobileNumber: app.MobileNumber,
-            BloodGroup: app.BloodGroup,
+            ApplicationId:      app.Id,
+            TokenNumber:        tokenNumber,
+            ApplicantName:      fullName,
+            Gender:             app.Gender == 'M' ? "Male" : app.Gender == 'F' ? "Female" : "Other",
+            Age:                app.Age,
+            DateOfBirth:        app.DateOfBirth,
+            BloodGroup:         app.BloodGroup?.Trim() ?? "—",
+            MobileNumber:       app.MobileNumber,
+            Address:            app.AddressId == "DEFAULT" ? "—" : app.AddressId,
+            WeeklySatsangCentre: app.WeeklySatsangCentreId == "DEFAULT" ? "—" : app.WeeklySatsangCentreId,
+            SerialNumber:       serial?.ApplicationSrNo ?? 0,
             ApplicationCentreId: app.ApplicationCentreId,
-            ApplicationDate: app.ApplicationDate,
-            SerialNumber: serial?.ApplicationSrNo ?? 0,
-            MedicalProblem: app.MedicalProblem,
-            IsDiabetes: app.IsDiabetes,
-            IsHypertension: app.IsHypertension,
-            IsCAD: app.IsCAD,
-            ApplicationStatus: app.ApplicationStatus
+            BatchCode:          app.ApplicationBatchCode?.Trim() ?? "—",
+            ApplicationDate:    app.ApplicationDate,
+            MedicalInfo: new MedicalInfoDto(
+                IsDiabetes:     app.IsDiabetes   == 'Y',
+                IsHypertension: app.IsHypertension == 'Y',
+                IsCAD:          app.IsCAD         == 'Y',
+                MedicalProblem: app.MedicalProblem,
+                DrugAllergies:  app.DrugAllergies
+            ),
+            IsAttendantAllowed: app.IsAttendantAllowed == 'Y',
+            AttendantName:      app.AttendantName,
+            ApplicationStatus:  app.ApplicationStatus
         ));
     }
 }

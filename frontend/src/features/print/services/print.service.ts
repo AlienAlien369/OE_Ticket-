@@ -1,9 +1,10 @@
 import { api } from '@features/auth/services/api-client'
 
 export interface PrintTicketData {
-  applicationId: bigint | string
-  applicationDate: string
+  applicationId: number
+  tokenNumber: string
   applicantName: string
+  applicationDate: string
   gender: string
   age: number
   dateOfBirth: string | null
@@ -32,10 +33,20 @@ interface BackendPrintResponse {
   message?: string
 }
 
+// Raw shape returned by GET /card-applications
+interface CardApplicationItem {
+  id: number
+  givenName: string
+  familyName?: string
+  applicationDate: string
+  applicationStatus: string
+  applicationBatchCode: string
+}
+
 interface BackendListResponse {
   success: boolean
   data: {
-    items: Array<{ id: string | number; applicantName: string; applicationDate: string; status: string; batchCode: string }>
+    items: CardApplicationItem[]
     totalCount: number
   }
 }
@@ -52,6 +63,16 @@ export const printService = {
       `/card-applications?pageNumber=${page}&pageSize=${pageSize}`
     )
     if (!response.success) throw new Error('Failed to load applications')
-    return response.data
+
+    // Map backend fields to the shape AppListRow expects
+    const items = response.data.items.map((item) => ({
+      id: item.id,
+      applicantName: [item.givenName, item.familyName].filter(Boolean).join(' '),
+      applicationDate: item.applicationDate,
+      status: item.applicationStatus,
+      batchCode: (item.applicationBatchCode ?? '').trim(),
+    }))
+
+    return { items, totalCount: response.data.totalCount }
   },
 }

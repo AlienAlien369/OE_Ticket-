@@ -70,6 +70,9 @@ public sealed class CardApplication : AuditableEntity
     public string? AssignMQTo { get; set; }
     public DateTime? AssignMCOn { get; set; }
 
+    /// <summary>Base64-encoded profile photo captured during token registration.</summary>
+    public string? PhotoData { get; set; }
+
     // Navigation
     public ICollection<ApplicationCentreSerial> CentreSerials { get; set; } = [];
 }

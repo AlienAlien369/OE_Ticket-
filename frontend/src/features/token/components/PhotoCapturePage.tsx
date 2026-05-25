@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Camera, Upload, CircleCheck, Circle, ChevronRight } from 'lucide-react'
+import { Camera, Upload, CircleCheck, Circle, ChevronRight, Loader2, Cloud } from 'lucide-react'
 import { Button } from '@components/ui/Button'
 import { ROUTES } from '@config/index'
+import { tokenService } from '../services/tokenService'
 
 const STEPS = ['Personal Details', 'Document Upload', 'Capture Photo']
 
@@ -17,6 +18,7 @@ type StoredProfile = {
   dob: string
   age: number
   token: string
+  applicationId?: number
 }
 
 const formatDisplayDate = (dob: string) => {
@@ -37,6 +39,7 @@ export const PhotoCapturePage = () => {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [capturedPhoto, setCapturedPhoto] = useState<string>('')
   const [isVideoReady, setIsVideoReady] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const profile = useMemo(() => {
     const fromState = (location.state as { profile?: StoredProfile } | null)?.profile
@@ -118,13 +121,33 @@ export const PhotoCapturePage = () => {
     reader.readAsDataURL(file)
   }
 
-  const handleSavePhoto = () => {
+  const handleSavePhoto = async () => {
     if (!capturedPhoto) {
       toast.error('Please capture or upload a photo first')
       return
     }
+
+    // Always save to localStorage as a quick local cache
     localStorage.setItem('token-photo', capturedPhoto)
-    toast.success('Photo saved successfully')
+
+    // If we have an applicationId, persist to the backend too
+    const applicationId: number | undefined = profile?.applicationId as number | undefined
+    if (applicationId) {
+      setIsSaving(true)
+      try {
+        await tokenService.savePhoto(applicationId, capturedPhoto)
+        toast.success('Photo saved to server ✓')
+      } catch {
+        // Non-fatal — photo is still in localStorage
+        toast.success('Photo saved locally (offline mode)')
+      } finally {
+        setIsSaving(false)
+      }
+    } else {
+      toast.success('Photo saved locally')
+    }
+
+    navigate(ROUTES.TOKEN_PRINT, { state: { profile } })
   }
 
   return (
@@ -230,13 +253,17 @@ export const PhotoCapturePage = () => {
                 />
               </div>
               <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Photo Guidelines
-                </p>
-                <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Cloud className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Photo Guidelines &amp; Storage
+                  </p>
+                </div>
+                <ul className="space-y-1 text-xs text-muted-foreground">
                   <li>- Ensure face is clearly visible and centered</li>
                   <li>- Capture with neutral expression and good lighting</li>
                   <li>- Avoid glasses or headwear if possible</li>
+                  <li className="text-primary/70">- Photo is saved to the server with the application record</li>
                 </ul>
               </div>
             </div>
@@ -248,10 +275,11 @@ export const PhotoCapturePage = () => {
             </Button>
             <Button
               type="button"
+              disabled={isSaving}
               onClick={handleSavePhoto}
-              rightIcon={<ChevronRight className="h-4 w-4" />}
+              rightIcon={isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
             >
-              Save Photo & Continue
+              {isSaving ? 'Saving...' : 'Save Photo & Continue'}
             </Button>
           </div>
         </section>

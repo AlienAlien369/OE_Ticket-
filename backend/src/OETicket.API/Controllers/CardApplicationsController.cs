@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using OETicket.Application.Features.CardApplications.Commands;
 using OETicket.Application.Features.CardApplications.DTOs;
 using OETicket.Application.Features.CardApplications.Queries;
-
 namespace OETicket.API.Controllers;
 
 [ApiController]
@@ -68,5 +67,21 @@ public sealed class CardApplicationsController(IMediator mediator) : ControllerB
             return BadRequest(result);
 
         return CreatedAtAction(nameof(GetAll), new { id = result.Data }, result);
+    }
+
+    /// <summary>Saves a base64-encoded profile photo for a card application.</summary>
+    [HttpPut("{applicationId:long}/photo")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SavePhoto(
+        long applicationId,
+        [FromBody] SavePhotoDto dto,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new SavePhotoCommand(applicationId, dto.PhotoBase64),
+            cancellationToken);
+
+        return result.Success ? Ok(result) : NotFound(result);
     }
 }

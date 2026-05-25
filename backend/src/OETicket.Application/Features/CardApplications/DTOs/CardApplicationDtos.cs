@@ -1,5 +1,8 @@
 namespace OETicket.Application.Features.CardApplications.DTOs;
 
+/// <summary>Payload for saving a profile photo.</summary>
+public sealed record SavePhotoDto(string PhotoBase64);
+
 public sealed record CardApplicationDto(
     long Id,
     DateOnly ApplicationDate,

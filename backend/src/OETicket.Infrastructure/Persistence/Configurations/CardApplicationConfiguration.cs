@@ -49,6 +49,7 @@ public sealed class CardApplicationConfiguration : IEntityTypeConfiguration<Card
         builder.Property(a => a.QCDoneBy).HasMaxLength(50);
         builder.Property(a => a.AssignQCTo).HasMaxLength(50);
         builder.Property(a => a.AssignMQTo).HasMaxLength(50);
+        builder.Property(a => a.PhotoData);   // text — base64 encoded profile photo
 
         builder.HasMany(a => a.CentreSerials)
             .WithOne(s => s.CardApplication)
