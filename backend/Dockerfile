@@ -19,8 +19,10 @@ RUN dotnet publish "src/OETicket.API/OETicket.API.csproj" \
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+# Install curl for health checks + create non-root user
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 
 COPY --from=build /app/publish .
 
