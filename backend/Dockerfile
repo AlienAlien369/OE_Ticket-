@@ -13,7 +13,7 @@ RUN dotnet restore "src/OETicket.API/OETicket.API.csproj"
 # Copy everything and build
 COPY . .
 RUN dotnet publish "src/OETicket.API/OETicket.API.csproj" \
-    -c Release -o /app/publish --no-restore
+    -c Release -o /app/publish
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
